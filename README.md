@@ -1,7 +1,6 @@
+HCPAWRepTool is HCP Anywhere Reporting Tool, an add-on to Hitachi Content Platform Anywhere (HCP Anywhere).
 
-This tool is add-on to Hitachi Content Platform Anywhere (HCP Anywhere). 
+It generates the various reports for HCP Anywhere system.
 
-It generates the reports for HCP Anywhere system in CSV format.
-
-Read README.txt for more information.
+Read bin/README.txt for more information.
 
