@@ -30,30 +30,39 @@ This is an open source project.
 HOW TO BUILD THIS TOOL
 ----------------------
 
-* Install Java 8 or later. Download it from https://java.com/en/download .
-* Download the HCPAWRepTool_src package from here <link> and unzip it
+* Install Java 8 or later.
+  Download JRE file (Java Runtime Environment) from https://java.com and install it.
+
+* Clone or download the HCPAWRepTool package from GitHub. 
+
 * Run a build script:
-	buildme.bat	on Windows (in .\build directory)
-	buildme		on Linux (in ./build directory)
-* It will produce HCPAWRepTool.jar file which can be run on any system with Java 8 or later. 
-  See the next section.
+      - .\build\buildme.bat	on Windows
+      - ./build/buildme		on Linux 
+  It will produce HCPAWRepTool.jar file in bin directory
+
+HCPAWRepTool.jar file runs on any system with Java 8 or later. See the next section.
 
 
 INSTALLATION
 ------------
 
- * Please install Java 8 or later. Download it from https://java.com/en/download .
+ * Install Java 8 or later.
+   Download JRE file (Java Runtime Environment) from https://java.com and install it.
 
- * No other installation is required. 
+ * No other installation is required 
+   - simply download HCPAWRepTool.jar 
+     from https://github.com/Hitachi-Data-Systems/HCPAWRepTool/blob/master/bin/HCPAWRepTool.jar 
+   or 
+   - build HCPAWRepTool.jar file as described in the previous section.
  
- * Simply download HCPAWRepTool.jar file and run it in either a GUI mode or in a command line mode. 
-          java -jar HCPAWRepTool.jar
+ * Run HCPAWRepTool.jar in either a GUI mode or in a command line mode. 
+      -  java -jar HCPAWRepTool.jar
 	  or
-          java -jar HCPAWRepTool.jar --help
+      -  java -jar HCPAWRepTool.jar --help
+
+      -  Alternatively, if on Windows, click on bin\start_gui.bat or bin\start_cmd.bat
  
  * Check the command line usage below or use --help option for the command line usage.
- 
- * Use start_gui.bat and start_cmd.bat to start the tool in the GUI mode or command line mode
 
 
 ADDITIONAL DETAILS
@@ -76,80 +85,81 @@ avoid an accidental overriding of an existing file.
 USAGE
 -----
 
-HCPAWRepTool v0.9 - (c) 2017-2018 Hitachi Vantara
-usage: java -jar HCPAWRepTool.jar [options]
- -a,--aw-server <awserver-name-or-ip>    Domain name or IP address of the HCP Anywhere server
- -b,--total-records <number>             Total number of records to be collected/saved, default 0 (all records)
- -c,--csvfile <csv-filename>             Output CSV file name
- -e,--end-time <time>                    Auditing end time, e.g. "2017-01-27 21:00:00", default is current time
- -g,--get-all                            Get all reports available for a specified scope
- -h,--help                               Shows this message
- -i,--csv-time-suffix                    Add timestamp to csv filename, e.g. myfile_20170104_174608.csv
- -j,--jsonfile <json-filename>           Input JSON file name
- -l,--loglevel <number>                  Log level (0-3): default 2
- -n,--num-records-reply <number>         Number of records in a single API reply, default 100
- -o,--port <awserver-port-number>        Management port number of the HCP Anywhere server, default 8000
- -p,--password <password>                Password for admin account on HCP Anywhere server
- -q,--description <number>               Put the short description of the report in CSV file: on the first line (1), or in the
-                                         last column of the header line (2), or disable (0); default is 1
- -r,--report <report-name-or-number>     Name or number of the report. Reporting APIs:
-                                         Audit Reports:
-                                         1 : /mapi/report/audit/user/activity/account
-                                         2 : /mapi/report/audit/user/activity/file/reads
-                                         3 : /mapi/report/audit/user/activity/file/modifications
-                                         4 : /mapi/report/audit/user/activity/file/linkReads
-                                         5 : /mapi/report/audit/user/activity/file/ownedModifications
-                                         6 : /mapi/report/audit/user/activity/file/ownedReads
-                                         7 : /mapi/report/audit/user/activity/file/ownedLinkReads
-                                         8 : /mapi/report/audit/user/activity/path/modifications
-                                         9 : /mapi/report/audit/user/activity/path/reads
-                                         10 : /mapi/report/audit/user/activity/path/linkReads
-                                         11 : /mapi/report/audit/user/activity/collaboration/sharedLink
-                                         12 : /mapi/report/audit/user/activity/collaboration/share
-                                         Admin Reports:
-                                         13 : /mapi/report/admin/user/profileOverrides
-                                         14 : /mapi/report/admin/user/authProviderAccess
-                                         15 : /mapi/report/admin/user/access
-                                         16 : /mapi/report/admin/user/orphaned
-                                         17 : /mapi/report/admin/user/lastAccess
-                                         18 : /mapi/report/admin/user/storage
-                                         19 : /mapi/report/admin/system/storage
-                                         20 : /mapi/report/admin/user/highQuotaUsage
-                                         21 : /mapi/report/admin/user/devices
-                                         22 : /mapi/report/admin/teamFolders
- -s,--start-time <time>                  Auditing start time, e.g. "2016-12-28 21:00:00", default is 30 days prior to end-time
- -t,--audited-path <audited-path>        Audited path, for example "/MyFolder/myfile2"
- -u,--username <username>                Admin/auditor username for HCP Anywhere server
- -v,--audited-user <audited-user-name>   Username of audited user
- -w,--gui                                Start GUI
- -x,--audited-profile <profile-name>     Name of audited profile
- -y,--system-scope                       Set SYSTEM scope
- -z,--timezone <timezone-abbreviation>   Timezone used in the report, default "GMT"
-
-Few examples:  java -jar HCPAWRepTool.jar ...
-
-Profile scope:
-    -a awserver.example.com -u auditorname -x fssprofile1 -c csvfile1.csv -i -r 1
-    -a awserver.example.com -u auditorname -x fssprofile1 -c csvfile1.csv -i -r /mapi/report/audit/user/activity/account
-
-User scope:
-    -a awserver.example.com -u auditorname -v user2 -c csvfile2.csv -i -r 3
-
-System scope:
-    -a awserver.example.com -u auditorname -y -i -r 19
-
-All reports of system scope:
-    -a awserver.example.com -u auditorname -y -i -g
-
-All reports scoped to a user:
-    -a awserver.example.com -u auditorname -v user2 -i -g
-
-All reports scoped to a profile, within time interval:
-    -a awserver.example.com -u auditorname -g -x fssprofile -s "2016-11-01 00:00:00" -e "2017-01-01 12:00:00" -i
-
-Convert a json file to csv:
-    -j yourjsonfile.json
-
+ HCPAWRepTool v0.9 - HCP Anywhere Reporting Tool - (c) 2017-2018 Hitachi Vantara Corporation
+ usage: java -jar HCPAWRepTool.jar [options]
+  -a,--aw-server <awserver-name-or-ip>    Domain name or IP address of the HCP Anywhere server
+  -b,--total-records <number>             Total number of records to be collected/saved, default 0 (all records)
+  -c,--csvfile <csv-filename>             Output CSV file name
+  -e,--end-time <time>                    Auditing end time, e.g. "2017-01-27 21:00:00", default is current time
+  -g,--get-all                            Get all reports available for a specified scope
+  -h,--help                               Shows this message
+  -i,--csv-time-suffix                    Add timestamp to csv filename, e.g. myfile_20170104_174608.csv
+  -j,--jsonfile <json-filename>           Input JSON file name
+  -l,--loglevel <number>                  Log level (0-3): default 2
+  -n,--num-records-reply <number>         Number of records in a single API reply, default 100
+  -o,--port <awserver-port-number>        Management port number of the HCP Anywhere server, default 8000
+  -p,--password <password>                Password for admin account on HCP Anywhere server
+  -q,--description <number>               Enable/disable a short description of the Report in CSV file: 0 - disable; 1 [default] -
+                                          enable, place it on the first line of CSV (above the header); 2 - enable, place it in the
+                                          header of CSV, on the last column
+  -r,--report <report-name-or-number>     Name or number of the report. Reporting APIs:
+                                          Audit Reports:
+                                          1 : /mapi/report/audit/user/activity/account
+                                          2 : /mapi/report/audit/user/activity/file/reads
+                                          3 : /mapi/report/audit/user/activity/file/modifications
+                                          4 : /mapi/report/audit/user/activity/file/linkReads
+                                          5 : /mapi/report/audit/user/activity/file/ownedModifications
+                                          6 : /mapi/report/audit/user/activity/file/ownedReads
+                                          7 : /mapi/report/audit/user/activity/file/ownedLinkReads
+                                          8 : /mapi/report/audit/user/activity/path/modifications
+                                          9 : /mapi/report/audit/user/activity/path/reads
+                                          10 : /mapi/report/audit/user/activity/path/linkReads
+                                          11 : /mapi/report/audit/user/activity/collaboration/sharedLink
+                                          12 : /mapi/report/audit/user/activity/collaboration/share
+                                          Admin Reports:
+                                          13 : /mapi/report/admin/user/profileOverrides
+                                          14 : /mapi/report/admin/user/authProviderAccess
+                                          15 : /mapi/report/admin/user/access
+                                          16 : /mapi/report/admin/user/orphaned
+                                          17 : /mapi/report/admin/user/lastAccess
+                                          18 : /mapi/report/admin/user/storage
+                                          19 : /mapi/report/admin/system/storage
+                                          20 : /mapi/report/admin/user/highQuotaUsage
+                                          21 : /mapi/report/admin/user/devices
+                                          22 : /mapi/report/admin/teamFolders
+  -s,--start-time <time>                  Auditing start time, e.g. "2016-12-28 21:00:00", default is 30 days prior to end-time
+  -t,--audited-path <audited-path>        Audited path, for example "/MyFolder/myfile2"
+  -u,--username <username>                Admin/auditor username for HCP Anywhere server
+  -v,--audited-user <audited-user-name>   Username of audited user
+  -w,--gui                                Start GUI
+  -x,--audited-profile <profile-name>     Name of audited profile
+  -y,--system-scope                       Set SYSTEM scope
+  -z,--timezone <timezone-abbreviation>   Timezone used in the report, default "GMT"
+  
+ Few examples:  java -jar HCPAWRepTool.jar ...
+ 
+ Profile scope:
+     -a awserver.example.com -u auditorname -x fssprofile1 -c csvfile1.csv -i -r 1
+     -a awserver.example.com -u auditorname -x fssprofile1 -c csvfile1.csv -i -r /mapi/report/audit/user/activity/account
+ 
+ User scope:
+     -a awserver.example.com -u auditorname -v user2 -c csvfile2.csv -i -r 3
+  
+ System scope:
+     -a awserver.example.com -u auditorname -y -i -r 19
+ 
+ All reports of system scope:
+     -a awserver.example.com -u auditorname -y -i -g
+ 
+ All reports scoped to a user:
+     -a awserver.example.com -u auditorname -v user2 -i -g
+ 
+ All reports scoped to a profile, within time interval:
+     -a awserver.example.com -u auditorname -g -x fssprofile -s "2016-11-01 00:00:00" -e "2017-01-01 12:00:00" -i
+ 
+ Convert a json file to csv:
+     -j yourjsonfile.json
+ 
 
 ADDITIONAL EXAMPLES
 -------------------
