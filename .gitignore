@@ -1,0 +1,8 @@
+build/*.class
+build/*.jar
+build/org/*
+build/META-INF/maven/*
+build/META-INF/NOTICE*
+build/META-INF/MANIFEST*
+build/META-INF/LICENSE*
+build/META-INF/DEPENDENCIES*

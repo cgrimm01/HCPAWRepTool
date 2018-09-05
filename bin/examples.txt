@@ -1,0 +1,19 @@
+A few examples with the command line options: 
+
+# Print out the command line usage
+java -jar HCPAWRepTool.jar -h
+
+# Get the list of users and last access timestamp for each user. For all users in AW system
+java -jar HCPAWRepTool.jar -a awserver.example.com -u adminauditorname -y -r /mapi/report/admin/user/lastAccess
+java -jar HCPAWRepTool.jar -a awserver.example.com -u adminauditorname -y -r 17
+
+# Get the list of users and the last access timestamp for each user. For users from a specified profile (e.g. fssprofile1)
+java -jar HCPAWRepTool.jar -a awserver.example.com -u adminauditorname -x fssprofile1 -r /mapi/report/admin/user/lastAccess
+java -jar HCPAWRepTool.jar -a awserver.example.com -u adminauditorname -x fssprofile1 -r 17
+
+# Get all admin and audit reports for the system scope:
+java -jar HCPAWRepTool.jar -a awserver.example.com -u adminauditorname -y -g
+
+# Start in GUI mode 
+java -jar HCPAWRepTool.jar
+
