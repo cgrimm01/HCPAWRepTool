@@ -30,8 +30,11 @@ This is an open source project.
 HOW TO BUILD THIS TOOL
 ----------------------
 
+The tool's binary is available in /bin/HCPAWRepTool.jar
+You can skip to the next section (INSTALLATION) if you don't plan to build the tool.
+
 * Install Java 8 or later.
-  Download JRE file (Java Runtime Environment) from https://java.com and install it.
+  Download JDK file (Java Development Kit) from https://java.com and install it.
 
 * Clone or download the HCPAWRepTool package from GitHub. 
 
