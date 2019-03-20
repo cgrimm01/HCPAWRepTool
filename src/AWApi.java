@@ -59,8 +59,8 @@ public class AWApi {
 	private static String acceptKey = "Accept";
 	private static String acceptValue = "application/json";
 	
-	private static String deviceidValue= "969334AD-44FA-4023-8D49-A1817E12F5000"; // regenerate it! 
-	private static String clientNickname  = "MyClient4"; 
+	private static String deviceidValue= "969334AD-44FA-4023-8D49-A1817E12F5001"; // regenerate it! 
+	private static String clientNickname  = "HCPAWRepTool"; 
 	
 	private static String partialTag = ",\"pageToken\":";
 	
@@ -73,6 +73,9 @@ public class AWApi {
 	private String _auditedUser = null;
 	private String _auditedPath = null;
 	private boolean _systemScope = false;	
+
+	private boolean _includeVersions = false; 
+	private int _inactivityTimeSeconds = 0;
 
 	private String _auditedStartTime = "2";
 	private String _auditedEndTime = "1990000000000"; // year 2033 
@@ -150,8 +153,24 @@ public class AWApi {
 		if (startTime != null) _auditedStartTime = startTime;
 	}
 
+	public void clearEndTime() {
+		_auditedEndTime = null;
+	}
+	public void clearStartTime() {
+		_auditedStartTime = null;
+	}
+
+
 	public void setEndTime(String endTime) {
 		if (endTime != null) _auditedEndTime = endTime;
+	}
+
+	public void setIncludeVersions(boolean includeVersions) {
+		_includeVersions = includeVersions;
+	}
+
+	public void setInactivityTimeSeconds(int inactivityTimeSeconds) {
+		_inactivityTimeSeconds = inactivityTimeSeconds;
 	}
 
 	public String getAwServer() {
@@ -197,6 +216,13 @@ public class AWApi {
 		return _auditedEndTime;
 	}
 	
+	public boolean getIncludeVersions() {
+		return _includeVersions;
+	}
+
+	public int getInactivityTimeSeconds() {
+		return _inactivityTimeSeconds;
+	}
 	
 	/**
 	 * isReplyPartial - detect if the reply is partial or final
@@ -236,14 +262,16 @@ public class AWApi {
 		
 		setRequest(request);
 		String body = "{" + "\n" + 
-				"\"scope\":" + (_systemScope ? "\"SYSTEM\"," : "\"PROFILE\",") + "\n" +
-				(_auditedProfile != null ? "\"profile\": \"" + _auditedProfile + "\","+ "\n" : "") +
-				(_auditedUser != null ? "\"user\": \"" + _auditedUser + "\"," + "\n" : "") +
-				(_auditedPath != null ? "\"path\": \"" + _auditedPath + "\"," + "\n" : "") +
-				"\"startTime\": " + _auditedStartTime + "," + "\n" +
-				"\"endTime\": " + _auditedEndTime + 
-				(_numResults > 0 ? ",\n\"maxResults\": " + _numResults : "") + "\n" +				
-				"} " + "\n";	
+				"\"scope\":" + (_systemScope ? "\"SYSTEM\"" : "\"PROFILE\"") + 
+				(_auditedProfile != null ? ",\n\"profile\": \"" + _auditedProfile + "\"" : "") +
+				(_auditedUser != null ? ",\n\"user\": \"" + _auditedUser + "\"" : "") +
+				(_auditedPath != null ? ",\n\"path\": \"" + _auditedPath + "\"" : "") +
+				(_auditedStartTime != null ? ",\n\"startTime\": " + _auditedStartTime : "") +
+				(_auditedEndTime != null ? ",\n\"endTime\": " + _auditedEndTime : "") +
+			    (_inactivityTimeSeconds > 0 ? ",\n\"inactivityTimeSeconds\": \"" + _inactivityTimeSeconds + "\"" : "") + 
+				(_includeVersions ? ",\n\"includeVersions\": true" : "") + 
+				(_numResults > 0 ? ",\n\"maxResults\": " + _numResults : "") + 
+				"\n" + "}" + "\n";	
 		Helper.mylog(4, body);		
 		return postRequestBody(body);
 	}

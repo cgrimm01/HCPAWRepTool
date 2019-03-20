@@ -20,7 +20,7 @@
  */
 
 public class MapiHandler {
-    
+
 	// Configurable values:
 	final static int getNumberOfEndpoints() {
 		return mapiDescriptions.length;
@@ -158,6 +158,10 @@ public class MapiHandler {
 	};	
 
 	static private String retMessage = "";
+
+	public enum MapiType {
+		MAPI_ADMIN, MAPI_AUDIT;
+	}
 	
     //
     // Set the scope of the API request, one of the following: system, profile, user
@@ -237,6 +241,20 @@ public class MapiHandler {
     		}
     	}
 
+		if (mapiDescr.getMapiType() == MapiType.MAPI_ADMIN) {
+			// admin endpoints don't accept start/end times anyway:  
+			awAPI.clearStartTime();
+			awAPI.clearEndTime();
+		}
+
+		if (mapiDescr.isIncludeVersionsSupported()) {
+			awAPI.setIncludeVersions(true);
+		}
+
+		if (mapiDescr.isInactivityTimeSecondsSupported()) {
+			awAPI.setInactivityTimeSeconds(0); // TBD: add an input parameter for "inactivity time in seconds" in the cmd line
+		}
+		
     	return ret;
     }   
     
@@ -279,6 +297,16 @@ public class MapiHandler {
 		boolean isPathRequired() {
 			return isPathRequired;
 		}
+		MapiType getMapiType() {
+			return (mapiName.contains("/mapi/report/audit") ? MapiType.MAPI_AUDIT : MapiType.MAPI_ADMIN);
+		}
+		boolean isIncludeVersionsSupported() {
+			return (mapiName.equals("/mapi/report/admin/user/storage"));
+		}
+		boolean isInactivityTimeSecondsSupported() {
+			return (mapiName.equals("/mapi/report/admin/user/lastAccess"));
+		}
+
 	}
 	
 }

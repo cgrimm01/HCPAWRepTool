@@ -1,4 +1,4 @@
-Last updated on September, 5 2018
+Last updated on March, 20 2019
 
 CONTENT OF THIS README
 ----------------------
@@ -30,8 +30,11 @@ This is an open source project.
 HOW TO BUILD THIS TOOL
 ----------------------
 
+The tool's binary is available in /bin/HCPAWRepTool.jar
+You can skip to the next section (INSTALLATION) if you don't plan to build the tool.
+
 * Install Java 8 or later.
-  Download JRE file (Java Runtime Environment) from https://java.com and install it.
+  Download JDK file (Java Development Kit) from https://java.com and install it.
 
 * Clone or download the HCPAWRepTool package from GitHub. 
 
@@ -85,7 +88,7 @@ avoid an accidental overriding of an existing file.
 USAGE
 -----
 
- HCPAWRepTool v0.9 - HCP Anywhere Reporting Tool - (c) 2017-2018 Hitachi Vantara Corporation
+ HCPAWRepTool v0.91 - HCP Anywhere Reporting Tool - (c) 2017-2019 Hitachi Vantara Corporation
  usage: java -jar HCPAWRepTool.jar [options]
   -a,--aw-server <awserver-name-or-ip>    Domain name or IP address of the HCP Anywhere server
   -b,--total-records <number>             Total number of records to be collected/saved, default 0 (all records)
