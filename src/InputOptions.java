@@ -19,11 +19,10 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import org.apache.commons.cli.CommandLineParser;
+
+import java.io.File;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.Option;
@@ -55,6 +54,7 @@ public class InputOptions {
 	final static private String CMD_LINE_AWSERVER = "aw-server";
 	final static private String CMD_LINE_USERNAME = "username";
 	final static private String CMD_LINE_PASSWORD = "password";
+	final static private String CMD_LINE_USERKEYSTORE = "user-keystore";
 	final static private String CMD_LINE_MAPI = "report";
 	final static private String CMD_LINE_AUDITED_PROFILE = "audited-profile";
 	final static private String CMD_LINE_AUDITED_USER = "audited-user";	
@@ -106,6 +106,7 @@ public class InputOptions {
 	private static String awName = null; // e.g. "cluster64d-vm4-0.lab.archivas.com"
 	private static String username = null; //e.g. "vrevsin"
 	private static String password = null; 
+	private static String userKeyStore = null;
 	private static String auditedProfile = null; // e.g. "fssusers"
 	private static String auditedUser = null; // e.g. "testuser"
 	private static String auditedPath = null; // e.g. "/myfolder/myfile
@@ -194,6 +195,14 @@ public class InputOptions {
 		return username; 
 	}
 
+	public static void setUserKeyStore(String value) {
+		userKeyStore = value;
+	}
+	
+	public static String getUserKeyStore() {
+		return userKeyStore;
+	}
+	
 	public static void setPassword(String value) {
 		password = value;
 	}
@@ -322,6 +331,14 @@ public class InputOptions {
         	     .argName( "username" )
                  .desc("Admin/auditor username for HCP Anywhere server")
                  .build();
+
+     	Option userKeyStoreOption = Option.builder("k")
+                .longOpt( CMD_LINE_USERKEYSTORE )
+                .required(false)
+        	     .hasArg()
+       	     .argName( "user-keystore" )
+                .desc("Admin/auditor user certificate key store file for HCP Anywhere server")
+                .build();
 
      	Option portOption = Option.builder("o")
                 .longOpt( CMD_LINE_AWPORT )
@@ -490,7 +507,7 @@ public class InputOptions {
                 .build();
      	
      	// List of visible options:
-     	Option visibleOptions[] = { helpOption, awOption, userOption, passwordOption, mapiOption,
+     	Option visibleOptions[] = { helpOption, awOption, userOption, passwordOption, userKeyStoreOption, mapiOption,
      	    				profileOption, auditeduserOption, auditedPathOption, systemScopeOption,    	    	
      	    				csvfileOption, jsonfileOption, startTimeOption, endTimeOption, timeZoneOption,
      	    				csvTimeSuffixOption, allReportsOption, guiOption, portOption, numRecordsOption,
@@ -584,7 +601,7 @@ public class InputOptions {
     					Integer.parseInt((String) (cmdLine.getParsedOptionValue(CMD_LINE_RECORDSINREPLY))) : DEFAULT_RECORDS_IN_REPLY;
     		if (numResults > MAX_RECORDS_IN_REPLY) {
     			numResults = MAX_RECORDS_IN_REPLY;
-    			Helper.mylog(LOG_WARNING,"Specified number of records is greater then the maximum allowed. Using " + MAX_RECORDS_IN_REPLY);
+    			Helper.mylog(LOG_WARNING,"WARNING: Specified number of records is greater then the maximum allowed. Using " + MAX_RECORDS_IN_REPLY);
     		}
     		
 			totalRecordsMax = cmdLine.hasOption(CMD_LINE_TOTAL_RECORD_NUMBERS) ? 
@@ -599,9 +616,52 @@ public class InputOptions {
     		username = cmdLine.hasOption(CMD_LINE_USERNAME) ?
     						(String) (cmdLine.getParsedOptionValue( CMD_LINE_USERNAME )) : null; 
 
+    		userKeyStore = cmdLine.hasOption(CMD_LINE_USERKEYSTORE) ?
+    				(String) (cmdLine.getParsedOptionValue( CMD_LINE_USERKEYSTORE )) : null; 
+    		
     		password = cmdLine.hasOption(CMD_LINE_PASSWORD) ?
-    		        				(String) (cmdLine.getParsedOptionValue(CMD_LINE_PASSWORD)) : null; 
-    						
+    				(String) (cmdLine.getParsedOptionValue(CMD_LINE_PASSWORD)) : null; 
+					
+            // Issue warning if both username and user key store was specified.
+    		if (null != username && null != userKeyStore) {
+	    		Helper.mylog(LOG_WARNING,"WARNING: Ignoring " + CMD_LINE_USERNAME + " input paramater since " + CMD_LINE_USERKEYSTORE + " was also specified.");
+	    		
+    			username = null;
+    		}
+
+    		// Validate any command line supplied user key store.  If not a valid file, will be ignoring and
+    		//   falling back to any JVM configured info.
+    		if ( null != userKeyStore) {
+    			File f = new File(userKeyStore);
+    			
+    			if ( ! f.exists() ) {
+    				Helper.mylog(LOG_ERROR, "ERROR: User key store file does not exist: " + userKeyStore);
+    				
+    				userKeyStore = null; // Fall back to use the JVM configured one.
+    			}
+    			
+    		}
+
+    		// If neither username or valid userCertFile was specified, going to default to using JVM information
+    		//   for keystore file.
+    		if (null == username && null == userKeyStore) {
+	    		Helper.mylog(LOG_BASE, "Using JVM configured key store for user authentication.");
+	    		
+	        	String keystoreFilename = System.getProperty("javax.net.ssl.keyStore");
+
+	        	if (! Helper.isEmpty(keystoreFilename)) {
+	        		
+	        		userKeyStore = keystoreFilename;
+
+	        		// Get key store password from JVM environment.  If none, just leave password
+	        		//   to whatever might have been provided in command parameters.
+	        		String keystorePassword = System.getProperty("javax.net.ssl.keyStorePassword");
+	        		if (null != keystorePassword) {
+	        			password = keystorePassword;
+	        		}
+	        	}
+    		}
+    		
     		auditedProfile = cmdLine.hasOption(CMD_LINE_AUDITED_PROFILE) ?
     	    				(String) (cmdLine.getParsedOptionValue(CMD_LINE_AUDITED_PROFILE)) : null;
     	    			
@@ -697,10 +757,10 @@ public class InputOptions {
 			    if (!Helper.isEmpty(request) && (mapiNumber == 0) && isSingleRequest && !usejsonfile) {
 					int offset1 = request.indexOf(MAPI_PREFIX);
 					if (offset1 < 0) {
-			    		Helper.mylog(LOG_ERROR,"ERROR: invalid MAPI name: '" + request + "'. Exiting...");
+			    		Helper.mylog(LOG_ERROR,"ERROR: Invalid MAPI name: '" + request + "'. Exiting...");
 			    		return myExit(EXIT_USAGE_ERROR);		    		
 					} else {			    		
-						Helper.mylog(LOG_WARNING,"Warning: a specified MAPI name does not match the predefined names. Skipping scope validation.");
+						Helper.mylog(LOG_WARNING,"WARNING: a specified MAPI name does not match the predefined names. Skipping scope validation.");
 					}
 			    }		    	
 		    }    
@@ -713,7 +773,7 @@ public class InputOptions {
 
     	//************ Verify the command line (in addition to earlier verification above):    	
     	// set 'useMapi' to true if one of the mapi options is specified 
-    	boolean useMapi = !Helper.isEmpty(awName) || !Helper.isEmpty(username) || 
+    	boolean useMapi = !Helper.isEmpty(awName) || !Helper.isEmpty(username) || !Helper.isEmpty(userKeyStore) ||
     			!isSingleRequest || !Helper.isEmpty(request) ||  
 				!Helper.isEmpty(auditedProfile) || !Helper.isEmpty(auditedUser) || systemScope ;    	    				
     	
@@ -722,7 +782,8 @@ public class InputOptions {
             Helper.mylog(LOG_BASE,"Converting " + jsonfile + " file");
     		
     	} else if (useMapi) {
-    		if (Helper.isEmpty(awName) || Helper.isEmpty(username) || 
+    		if (Helper.isEmpty(awName) ||
+    			(Helper.isEmpty(username) && Helper.isEmpty(userKeyStore)) ||
    				(isSingleRequest && Helper.isEmpty(request)) || 
   			    (Helper.isEmpty(auditedProfile) && Helper.isEmpty(auditedUser) && !systemScope) ){
     			
@@ -730,8 +791,8 @@ public class InputOptions {
     			if (Helper.isEmpty(awName)) {
     				errmsg += "    Missing an HCP Anywhere server name/IP \n";
     			}
-    			if (Helper.isEmpty(username)) {
-    				errmsg += "    Missing an auditor/admin username \n";
+    			if (Helper.isEmpty(username) && Helper.isEmpty(userKeyStore)) {
+    				errmsg += "    Missing an auditor/admin username or key file.\n";
     			}
     			if (isSingleRequest && Helper.isEmpty(request)) {
     				errmsg += "    Missing a report number or a name \n";

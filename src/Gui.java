@@ -23,7 +23,6 @@ import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.GridLayout;
 import java.awt.Dimension;
-import java.awt.Font;
 
 import javax.swing.*;
 import javax.swing.JFrame;
@@ -231,7 +230,7 @@ public class Gui {
     		
     		createDialogAwServer();  // ask for AW server, username and password information
     		    		     		
-    		if (Helper.isEmpty(awName) || Helper.isEmpty(username)  || Helper.isEmpty(password)) {
+    		if (Helper.isEmpty(awName) || Helper.isEmpty(username) || Helper.isEmpty(password)) {
     			String infoMessage = "ERROR: Missing HCP Anywhere server and/or credential information. Exiting.";
     			JOptionPane.showMessageDialog(null, infoMessage, 
     					AppManifest.getAppInfoLong(), 

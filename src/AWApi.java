@@ -25,17 +25,26 @@ import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-
+import java.io.FileInputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 import org.apache.wink.json4j.JSONObject;
@@ -55,9 +64,9 @@ public class AWApi {
 	private static String authKey= "Authorization";			
 	private static String deviceidKey = "X-HCPAW-DEVICE-ID";
 	private static String apiversionKey = "X-HCPAW-MANAGEMENT-API-VERSION";
-	private static String apiversionValue = "2.1.0";
+	private static String apiversionValue = "4.3.2";
 	private static String acceptKey = "Accept";
-	private static String acceptValue = "application/json";
+	private static String appjsonMIME = "application/json";
 	
 	private static String deviceidValue= "969334AD-44FA-4023-8D49-A1817E12F5001"; // regenerate it! 
 	private static String clientNickname  = "HCPAWRepTool"; 
@@ -66,6 +75,7 @@ public class AWApi {
 	
 	private String _awServer;
 	private String _username;
+	private String _userKeyStore;
 	private String _password;
 	private String _request;	
 	
@@ -98,8 +108,9 @@ public class AWApi {
 	 * @param request	- MAPI report request (e.g. /mapi/report/audit/user/activity/account)
 	 * @param auditedProfile	- audited profile name 
 	 * @param auditedUser		- audited user name (end-user's username)
+	 * @param userKeyStore		- File path to user key store file for auditor/admin user.
 	 */
-	public AWApi(String awServer, int port, String username, String password, String request, String auditedProfile, String auditedUser) {
+	public AWApi(String awServer, int port, String username, String password, String request, String auditedProfile, String auditedUser, String userKeyStore) {
 		
 		_awServer = awServer;
 		_port = port;
@@ -108,6 +119,7 @@ public class AWApi {
 		_request = request;
 		_auditedProfile = auditedProfile;
 		_auditedUser = auditedUser;
+		_userKeyStore = userKeyStore;
 	}
 
 	/**
@@ -178,6 +190,10 @@ public class AWApi {
 	}
 	public String getAwUsername() {
 		return _username;
+	}
+	
+	public String getAwUserKeyStore() {
+		return _userKeyStore;
 	}
 	
 	public String getAwPassword() {
@@ -318,7 +334,7 @@ public class AWApi {
 	    myCon.setRequestMethod("POST");
 	    
 	    myCon.setRequestProperty (authKey, _tokenType + " " + _accessToken); // "Bearer wivzjQjL/I4FGHG..."	    
-	    myCon.setRequestProperty (acceptKey, acceptValue);	    
+	    myCon.setRequestProperty (acceptKey, appjsonMIME);	    
 	    myCon.setRequestProperty (deviceidKey, deviceidValue);	    
 	    myCon.setRequestProperty (apiversionKey, apiversionValue);
 	    myCon.setRequestProperty ("Content-type", "application/json");	    
@@ -379,18 +395,27 @@ public class AWApi {
 	 * 						for the Reporting requests
 	 * 
 	 * throws IOException
+	 * @throws NoSuchAlgorithmException 
+	 * @throws KeyStoreException 
+	 * @throws CertificateException 
+	 * @throws UnrecoverableKeyException 
 	 */
 	public boolean getAccessToken() throws IOException {
 
 		try {
-			selfCert();	// Using a self signed cert is not the best idea
+			setSSLContext(_userKeyStore, _password);
 		} catch (Exception je) {
-			Helper.mylog(LOG_ERROR, "ERROR: Failed to self certify " + "\n[ " + je.getMessage() + " ]");
+			Helper.mylog(LOG_ERROR, "ERROR: Failed to construct SSL Context.\n[ " + je.getMessage() + " ]");
 			return false;
 		}
 
 		// curl_init and url
-	    URL url = new URL("https://" + _awServer + ":" + _port + "/login/oauth/");
+		URL url = null;
+		if (null != _username) {
+		    url = new URL("https://" + _awServer + ":" + _port + "/login/oauth/");
+		} else {
+			url = new URL("https://" + _awServer + ":" + _port + "/mapi/certificate");
+		}
 	    HttpURLConnection myCon = (HttpURLConnection) url.openConnection();
 
 	    //  CURLOPT_POST
@@ -398,18 +423,18 @@ public class AWApi {
 	    
 	    myCon.setRequestProperty (acceptKey, "*/*");	    
 	    myCon.setRequestProperty (apiversionKey, apiversionValue);
-	    myCon.setRequestProperty ("Content-type", "application/x-www-form-urlencoded");	    
+	    myCon.setRequestProperty ("Content-type", appjsonMIME);	    
 
 	    // CURLOPT_FOLLOWLOCATION
 	    // myCon.setInstanceFollowRedirects(true);
 
-	    String postData = "grant_type=urn:hds:oauth:negotiate-client"+
-	    					"&version=" + apiversionValue + 
-	    					"&uniqueId=" + deviceidValue + 
-	    					"&clientNickname=" + clientNickname +
-	    					"&username=" + _username + 
-	    					"&password=" + _password;   			
-	    
+	    String postData = "{ \"username\": \"" + (null != _username ? _username : "") + "\", " +
+	            "\"password\": \"" + (null != _password ? _password : "") + "\", " +
+	            "\"uniqueId\": \"" + deviceidValue + "\", " +
+	            "\"clientNickname\": \"" + clientNickname + "\", " +
+	            "\"version\": \"" + apiversionValue + "\", " +
+   	            "\"grant_type\": \"urn:hds:oauth:negotiate-client\" }";
+
 	    myCon.setRequestProperty("Content-length", String.valueOf(postData.length()));
 
 	    myCon.setDoOutput(true);
@@ -456,36 +481,53 @@ public class AWApi {
 	}
 	
 	/**
-	 * selfCert() - self signing certificate
+	 * setSSLContext() - Create SSL context with appropriate Trust Manager and or Client Key manager.
 	 * 
 	 * NOTE: OBTAIN A PUBLIC CERTIFICATE FROM A SERVER INSTEAD
 	 * 
 	 * @throws Exception
 	 */
-	public static void selfCert() throws Exception {
-	    /*
-	     *  fix for
-	     *    Exception in thread "main" javax.net.ssl.SSLHandshakeException:
-	     *       sun.security.validator.ValidatorException:
-	     *           PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException:
-	     *               unable to find valid certification path to requested target
-	     */
-	    TrustManager[] trustAllCerts = new TrustManager[] {
-	       new X509TrustManager() {
-	          public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-	            return null;
-	          }
+	public static void setSSLContext(String inClientKeyStore, String inPassword) throws Exception {
+		
+		TrustManager[] trustManagers = null;
 
-	          public void checkClientTrusted(X509Certificate[] certs, String authType) {  }
+		// Setup all trusting Trust Manager, if not directed to enforce Certificate trust via jvm 
+		//   property.
+		if ( ! Boolean.parseBoolean(System.getProperty("hcpawreptool.enforceCertTrust"))) {
+			// Setup to trust everything, if directed.
+		    trustManagers = new TrustManager[] {
+		       new X509TrustManager() {
+		          public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+		            return null;
+		          }
 
-	          public void checkServerTrusted(X509Certificate[] certs, String authType) {  }
+		          public void checkClientTrusted(X509Certificate[] certs, String authType) {  }
 
-	       }
-	    };
+		          public void checkServerTrusted(X509Certificate[] certs, String authType) {  }
 
-	    SSLContext sc = SSLContext.getInstance("SSL");
-	    sc.init(null, trustAllCerts, new java.security.SecureRandom());
-	    HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+		       }
+		    };
+		}
+
+		// Setup Key Manager, if there is going to be one.
+		KeyManager[] keyManagers = null;
+		if (null != inClientKeyStore) {
+	        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+
+	        // Build the Key Store based on the inputs we have to work with.
+	        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+
+            keyStore.load(new FileInputStream(inClientKeyStore), inPassword.toCharArray());
+
+	        keyManagerFactory.init(keyStore, inPassword.toCharArray());
+	        
+	        keyManagers = keyManagerFactory.getKeyManagers();
+		}
+		
+        // Build the ssl context and return it.
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(keyManagers, trustManagers, new SecureRandom());
+	    HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
 
 	    // Create all-trusting host name verifier
 	    HostnameVerifier allHostsValid = new HostnameVerifier() {
@@ -493,11 +535,9 @@ public class AWApi {
 	          return true;
 	        }
 	    };
+	    
 	    // Install the all-trusting host verifier
 	    HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
-	    /*
-	     * end of the fix
-	     */
 	}
 	
 	
@@ -510,7 +550,8 @@ public class AWApi {
  			String username = "auditadminusername";
  			String password = "myP@$$w0rd";
  			String awName = "hcpawserver.youcompany.com";
-	 		AWApi awAPI = new AWApi(awName, 8000, username, password, request, "", "");
+ 			
+	 		AWApi awAPI = new AWApi(awName, 8000, username, password, request, "", "", null);
 	 
  			try {
 	    		if (!awAPI.getAccessToken()) {

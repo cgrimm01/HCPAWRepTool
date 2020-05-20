@@ -25,7 +25,6 @@ import java.util.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
-import java.io.IOException;
 import java.io.Console;
 
 public class Main {
@@ -95,6 +94,7 @@ public class Main {
 		String request = InputOptions.getRequest();
 		String awName = InputOptions.getAwName();
 		String username = InputOptions.getUsername();
+		String userKeyStore = InputOptions.getUserKeyStore();
 		String password = InputOptions.getPassword();
 		String auditedProfile = InputOptions.getAuditedProfile();
 		String auditedUser = InputOptions.getAuditedUser();
@@ -173,11 +173,19 @@ public class Main {
     		// Display some applicable input parameters: 
     	    Helper.mylog(LOG_DETAILS, ":HCP Anywhere server: " + awName);
     	    if (port != DEFAULT_AWPORT) Helper.mylog(LOG_DETAILS, ":HCP Anywhere server port: " + port);
-    	    Helper.mylog(LOG_DETAILS, ":Admin/auditor username: " + username);    	    
-    		if (!gui && (username != null) && (password == null)) {
-    			password = enterPassword("Please enter password for \"" + username + "\" : "); 
-    		}
-    	    
+    	    if (null != username) {
+    	    	Helper.mylog(LOG_DETAILS, ":Admin/auditor username: " + username);    	    
+        		if (!gui && (password == null)) {
+        			password = enterPassword("Please enter password for \"" + username + "\" : "); 
+        		}
+    	    }
+    	    if (null != userKeyStore) {
+    	    	Helper.mylog(LOG_DETAILS, ":Admin/auditor user certficate file: " + userKeyStore);    	    
+        		if (!gui && (password == null)) {
+        			password = enterPassword("Please enter password for user key store file \"" + userKeyStore + "\" : "); 
+        		}
+    	    }
+
     		if (systemScope) Helper.mylog(LOG_DETAILS,":Audited scope: system");    		
     		if (auditedProfile != null) Helper.mylog(LOG_DETAILS,":Audited profile: " + auditedProfile);
     		if (auditedUser != null) Helper.mylog(LOG_DETAILS,":Audited username: " + auditedUser);
@@ -191,7 +199,7 @@ public class Main {
     		        		
 
     		//*********** Start API processing **************/
-	        AWApi awAPI = new AWApi(awName, port, username, password, request, auditedProfile, auditedUser);
+	        AWApi awAPI = new AWApi(awName, port, username, password, request, auditedProfile, auditedUser, userKeyStore);
 	        
 	    	awAPI.setNumResults(numResults); // set the number of records to read in one API call
 	    	awAPI.setStartTime(startTimeEpoch);   	
@@ -286,7 +294,11 @@ public class Main {
                 
     		try {
 	    		if (!awAPI.getAccessToken()) {
-	    			Helper.mylog(LOG_ERROR,"ERROR: Failed to login as " + username);
+	    			if (null != username) {
+		    			Helper.mylog(LOG_ERROR,"ERROR: Failed to login as " + username);
+	    			} else {
+		    			Helper.mylog(LOG_ERROR,"ERROR: Failed to login using key file " + awAPI.getAwUserKeyStore());	    				
+	    			}
 	    			// PASSWORD: Helper.mylog(LOG_ERROR,"ERROR: Failed to login as " + username + "(password: " + awAPI.getAwPassword() + ")");	    			
 	    			myExit(EXIT_LOGIN_ERROR);				
 	    			return;
