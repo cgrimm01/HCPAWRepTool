@@ -181,7 +181,7 @@ public class Main {
     	    }
     	    if (null != userKeyStore) {
     	    	Helper.mylog(LOG_DETAILS, ":Admin/auditor user certficate file: " + userKeyStore);    	    
-        		if (!gui && (password == null)) {
+        		if (!gui && ( ! userKeyStore.equals("Windows-MY") && password == null)) {
         			password = enterPassword("Please enter password for user key store file \"" + userKeyStore + "\" : "); 
         		}
     	    }
