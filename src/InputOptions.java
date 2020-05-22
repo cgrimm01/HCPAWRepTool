@@ -631,7 +631,7 @@ public class InputOptions {
 
     		// Validate any command line supplied user key store.  If not a valid file, will be ignoring and
     		//   falling back to any JVM configured info.
-    		if ( null != userKeyStore) {
+    		if ( null != userKeyStore && ! userKeyStore.equals("Windows-MY")) {
     			File f = new File(userKeyStore);
     			
     			if ( ! f.exists() ) {
