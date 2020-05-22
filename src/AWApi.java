@@ -521,6 +521,8 @@ public class AWApi {
 	        	keyStore = KeyStore.getInstance("Windows-MY");
 	        	
 	        	keyStore.load(null, null);
+	        	
+	        	inPassword = "password";  // Don't need a password from user, so just make one up.
 	        }  else {
 		        // Build the Key Store based on the inputs we have to work with.
 		        keyStore = KeyStore.getInstance("PKCS12");
