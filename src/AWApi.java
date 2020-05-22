@@ -514,11 +514,20 @@ public class AWApi {
 		if (null != inClientKeyStore) {
 	        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 
-	        // Build the Key Store based on the inputs we have to work with.
-	        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+	        KeyStore keyStore = null;
+	        
+	        // Is this the Windows Built-in key store? 
+	        if (inClientKeyStore.equals("Windows-MY")) {
+	        	keyStore = KeyStore.getInstance("Windows-MY");
+	        	
+	        	keyStore.load(null, null);
+	        }  else {
+		        // Build the Key Store based on the inputs we have to work with.
+		        keyStore = KeyStore.getInstance("PKCS12");
 
-            keyStore.load(new FileInputStream(inClientKeyStore), inPassword.toCharArray());
-
+	            keyStore.load(new FileInputStream(inClientKeyStore), inPassword.toCharArray());
+	        }
+	        
 	        keyManagerFactory.init(keyStore, inPassword.toCharArray());
 	        
 	        keyManagers = keyManagerFactory.getKeyManagers();
