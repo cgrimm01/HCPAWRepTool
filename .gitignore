@@ -6,3 +6,5 @@ build/META-INF/NOTICE*
 build/META-INF/MANIFEST*
 build/META-INF/LICENSE*
 build/META-INF/DEPENDENCIES*
+bin/com/
+.DS_Store

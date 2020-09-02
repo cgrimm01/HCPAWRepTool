@@ -1,3 +1,4 @@
+package com.hitachivantara.hcpaw;
 /**
  * HCP Anywhere Reporting Tool  
  * Copyright (C) 2017-2018 Hitachi Vantara Corporation
@@ -30,6 +31,8 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 
 import org.apache.commons.lang.StringUtils;
+
+import com.hitachivantara.hcpaw.gui.Gui;
 
 public class InputOptions {
 
@@ -73,6 +76,7 @@ public class InputOptions {
 	final static private String CMD_LINE_CSVSUFFIX = "csv-time-suffix";	
 	final static private String CMD_LINE_TOTAL_RECORD_NUMBERS = "total-records";
 	final static private String CMD_LINE_DESCRIPTION_PLACE = "description";
+	final static private String CMD_LINE_BEARER_TOKEN = "bearer-token";
 	final static private String CMD_LINE_DEBUG = "debug";	
 
     // Default values:
@@ -119,6 +123,7 @@ public class InputOptions {
 	private static int numResults = DEFAULT_RECORDS_IN_REPLY; // number of records to read at one time
 	private static int totalRecordsMax = DEFAULT_TOTAL_RECORDS; // number of total requested records
 	private static int descriptionPlace = DEFAULT_DESCRIPTION_PLACE; // where to place the report description in CSV file 
+	private static String bearerToken = null;
 	
 	private static String jfilename = null;
 	private static boolean usejsonfile = false;	
@@ -302,7 +307,14 @@ public class InputOptions {
 		return isAuthenticated;
 	}
 
-
+	public static void setBearerToken(String inToken) {
+		bearerToken = inToken;
+	}
+	
+	public static String getBearerToken() {
+		return bearerToken;
+	}
+	
 	//////////////////////////////////////////////////////////////////////////
     //
     //  Process the command line arguments
@@ -356,6 +368,14 @@ public class InputOptions {
                 .desc("Password for admin account on HCP Anywhere server")
                 .build();
 
+     	Option bearerTokenOption = Option.builder("bt")
+     			.longOpt( CMD_LINE_BEARER_TOKEN )
+     			.required( false )
+     			.hasArg()
+     			.argName( "bearer-token")
+     			.desc("OAuth 2.0 Bearer Token obtained via other mechanism")
+     			.build();
+     	
      	// Build the list of all reports for Help (usage)
      	String mapi_usage = "";
      	boolean auditTitle = false;
@@ -507,7 +527,8 @@ public class InputOptions {
                 .build();
      	
      	// List of visible options:
-     	Option visibleOptions[] = { helpOption, awOption, userOption, passwordOption, userKeyStoreOption, mapiOption,
+     	Option visibleOptions[] = { helpOption, awOption, userOption, passwordOption, userKeyStoreOption,
+     			            bearerTokenOption, mapiOption,
      	    				profileOption, auditeduserOption, auditedPathOption, systemScopeOption,    	    	
      	    				csvfileOption, jsonfileOption, startTimeOption, endTimeOption, timeZoneOption,
      	    				csvTimeSuffixOption, allReportsOption, guiOption, portOption, numRecordsOption,
@@ -622,6 +643,9 @@ public class InputOptions {
     		password = cmdLine.hasOption(CMD_LINE_PASSWORD) ?
     				(String) (cmdLine.getParsedOptionValue(CMD_LINE_PASSWORD)) : null; 
 					
+    		bearerToken = cmdLine.hasOption(CMD_LINE_BEARER_TOKEN) ?
+    				(String) (cmdLine.getParsedOptionValue( CMD_LINE_BEARER_TOKEN )) : null; 
+    	    		
             // Issue warning if both username and user key store was specified.
     		if (null != username && null != userKeyStore) {
 	    		Helper.mylog(LOG_WARNING,"WARNING: Ignoring " + CMD_LINE_USERNAME + " input paramater since " + CMD_LINE_USERKEYSTORE + " was also specified.");
@@ -631,7 +655,7 @@ public class InputOptions {
 
     		// Validate any command line supplied user key store.  If not a valid file, will be ignoring and
     		//   falling back to any JVM configured info.
-    		if ( null != userKeyStore && ! userKeyStore.equals("Windows-MY")) {
+    		if ( null != userKeyStore && ! userKeyStore.equals("Windows-MY") && ! userKeyStore.contentEquals("CAC")) {
     			File f = new File(userKeyStore);
     			
     			if ( ! f.exists() ) {
@@ -639,12 +663,11 @@ public class InputOptions {
     				
     				userKeyStore = null; // Fall back to use the JVM configured one.
     			}
-    			
     		}
-
+    		
     		// If neither username or valid userCertFile was specified, going to default to using JVM information
     		//   for keystore file.
-    		if (null == username && null == userKeyStore) {
+    		if (null == username && null == userKeyStore && null == bearerToken ) {
 	    		Helper.mylog(LOG_BASE, "Using JVM configured key store for user authentication.");
 	    		
 	        	String keystoreFilename = System.getProperty("javax.net.ssl.keyStore");
@@ -774,7 +797,7 @@ public class InputOptions {
     	//************ Verify the command line (in addition to earlier verification above):    	
     	// set 'useMapi' to true if one of the mapi options is specified 
     	boolean useMapi = !Helper.isEmpty(awName) || !Helper.isEmpty(username) || !Helper.isEmpty(userKeyStore) ||
-    			!isSingleRequest || !Helper.isEmpty(request) ||  
+    			!isSingleRequest || !Helper.isEmpty(request) || !Helper.isEmpty(bearerToken) ||
 				!Helper.isEmpty(auditedProfile) || !Helper.isEmpty(auditedUser) || systemScope ;    	    				
     	
     	if (usejsonfile) {
@@ -783,7 +806,7 @@ public class InputOptions {
     		
     	} else if (useMapi) {
     		if (Helper.isEmpty(awName) ||
-    			(Helper.isEmpty(username) && Helper.isEmpty(userKeyStore)) ||
+    			(Helper.isEmpty(username) && Helper.isEmpty(userKeyStore) && Helper.isEmpty(bearerToken)) ||
    				(isSingleRequest && Helper.isEmpty(request)) || 
   			    (Helper.isEmpty(auditedProfile) && Helper.isEmpty(auditedUser) && !systemScope) ){
     			
@@ -791,8 +814,8 @@ public class InputOptions {
     			if (Helper.isEmpty(awName)) {
     				errmsg += "    Missing an HCP Anywhere server name/IP \n";
     			}
-    			if (Helper.isEmpty(username) && Helper.isEmpty(userKeyStore)) {
-    				errmsg += "    Missing an auditor/admin username or key file.\n";
+    			if (Helper.isEmpty(username) && Helper.isEmpty(userKeyStore) && Helper.isEmpty(bearerToken)) {
+    				errmsg += "    Missing an auditor/admin username, key file, or bearer token.\n";
     			}
     			if (isSingleRequest && Helper.isEmpty(request)) {
     				errmsg += "    Missing a report number or a name \n";

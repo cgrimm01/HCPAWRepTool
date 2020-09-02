@@ -1,3 +1,4 @@
+package com.hitachivantara.hcpaw;
 /**
  * HCP Anywhere Reporting Tool  
  * Copyright (C) 2017-2018 Hitachi Vantara Corporation
@@ -30,7 +31,7 @@ public class AppManifest {
 	static private String appVendorName = "Hitachi Vantara Corporation";// overwritten by manifest.mf
 	static private String appCopyrightYears = "2017-2020";				// overwritten by manifest.mf
 	static private String appTitle = "HCP Anywhere Reporting Tool";		// overwritten by manifest.mf
-	static private String appVersionNumber = "v0.9";					// overwritten by manifest.mf
+	static private String appVersionNumber = "0.10";					// overwritten by manifest.mf
 	static private String appName = "HCPAWRepTool";
 
 
@@ -64,12 +65,11 @@ public class AppManifest {
 			appJarName = jarname;
 			
 			jar.close();
-
-			setAppInfoStrings(); // set the app info strings
-
 		}
 		catch (IOException ioe) {
 			Helper.mylog(Helper.LOG_BASE, "WARNING - Couldn't read tool properties from MANIFEST.MF file");
+		} finally {
+			setAppInfoStrings();
 		}
 	}
 

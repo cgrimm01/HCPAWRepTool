@@ -1,3 +1,4 @@
+package com.hitachivantara.hcpaw;
 /**
  * HCP Anywhere Reporting Tool 
  * Copyright (C) 2017-2018 Hitachi Vantara Corporation
@@ -25,7 +26,6 @@ import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.FileInputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -39,7 +39,6 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -48,6 +47,8 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 import org.apache.wink.json4j.JSONObject;
+
+import com.hitachivantara.hcpaw.certutil.CertificateStore;
 
 /**
  * This class handles interactions with HCP Anywhere server using the HCP Anywhere Reporting API
@@ -77,6 +78,7 @@ public class AWApi {
 	private String _username;
 	private String _userKeyStore;
 	private String _password;
+	private String _bearerToken;
 	private String _request;	
 	
 	private String _auditedProfile = null;
@@ -109,8 +111,9 @@ public class AWApi {
 	 * @param auditedProfile	- audited profile name 
 	 * @param auditedUser		- audited user name (end-user's username)
 	 * @param userKeyStore		- File path to user key store file for auditor/admin user.
+	 * @param bearerToken       - Pre-generated OAuth Bearer Token
 	 */
-	public AWApi(String awServer, int port, String username, String password, String request, String auditedProfile, String auditedUser, String userKeyStore) {
+	public AWApi(String awServer, int port, String username, String password, String request, String auditedProfile, String auditedUser, String userKeyStore, String bearerToken) {
 		
 		_awServer = awServer;
 		_port = port;
@@ -120,6 +123,7 @@ public class AWApi {
 		_auditedProfile = auditedProfile;
 		_auditedUser = auditedUser;
 		_userKeyStore = userKeyStore;
+		_bearerToken = bearerToken;
 	}
 
 	/**
@@ -200,6 +204,10 @@ public class AWApi {
 		return _password;
 	}
 
+	public String getAwBearerToken() {
+		return _bearerToken;
+	}
+	
 	public int getNumResults() {
 		return _numResults;
 	}
@@ -405,10 +413,19 @@ public class AWApi {
 		try {
 			setSSLContext(_userKeyStore, _password);
 		} catch (Exception je) {
+			je.printStackTrace();
 			Helper.mylog(LOG_ERROR, "ERROR: Failed to construct SSL Context.\n[ " + je.getMessage() + " ]");
 			return false;
 		}
 
+		// Use the bearer token that was given on command line.
+		if ( ! Helper.isEmpty(_bearerToken)) {
+		    _tokenType = "Bearer";
+		    _accessToken = _bearerToken;
+		    
+		    return true;
+		}
+		
 		// curl_init and url
 		URL url = null;
 		if (null != _username) {
@@ -512,15 +529,20 @@ public class AWApi {
 		// Setup Key Manager, if there is going to be one.
 		KeyManager[] keyManagers = null;
 		if (null != inClientKeyStore) {
-	        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 
-	        KeyStore keyStore = null;
+	        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 	        
+	        CertificateStore certStore = new CertificateStore(inClientKeyStore, inPassword);
+
+	        /*
 	        // Is this the Windows Built-in key store? 
+	        KeyStore keyStore = null;
+
 	        if (inClientKeyStore.equals("Windows-MY")) {
-	        	keyStore = KeyStore.getInstance("Windows-MY");
-	        	
-	        	keyStore.load(null, null);
+	        	App app = new App();
+	        	keyStore = app.buildKeyStore();
+		        //	keyStore = KeyStore.getInstance("Windows-MY");
+		        //	keyStore.load(null, null);
 	        	
 	        	inPassword = "password";  // Don't need a password from user, so just make one up.
 	        }  else {
@@ -529,8 +551,10 @@ public class AWApi {
 
 	            keyStore.load(new FileInputStream(inClientKeyStore), inPassword.toCharArray());
 	        }
-	        
 	        keyManagerFactory.init(keyStore, inPassword.toCharArray());
+	        */
+	        
+	        keyManagerFactory.init(certStore.getKeyStore(), inPassword.toCharArray());
 	        
 	        keyManagers = keyManagerFactory.getKeyManagers();
 		}
@@ -562,7 +586,7 @@ public class AWApi {
  			String password = "myP@$$w0rd";
  			String awName = "hcpawserver.youcompany.com";
  			
-	 		AWApi awAPI = new AWApi(awName, 8000, username, password, request, "", "", null);
+	 		AWApi awAPI = new AWApi(awName, 8000, username, password, request, "", "", null, null);
 	 
  			try {
 	    		if (!awAPI.getAccessToken()) {

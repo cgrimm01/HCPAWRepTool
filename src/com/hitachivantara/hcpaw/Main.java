@@ -1,3 +1,4 @@
+package com.hitachivantara.hcpaw;
 /**
  * HCP Anywhere Reporting Tool  
  * Copyright (C) 2017-2018 Hitachi Vantara Corporation
@@ -95,6 +96,7 @@ public class Main {
 		String awName = InputOptions.getAwName();
 		String username = InputOptions.getUsername();
 		String userKeyStore = InputOptions.getUserKeyStore();
+		String bearerToken = InputOptions.getBearerToken();
 		String password = InputOptions.getPassword();
 		String auditedProfile = InputOptions.getAuditedProfile();
 		String auditedUser = InputOptions.getAuditedUser();
@@ -185,7 +187,8 @@ public class Main {
         			password = enterPassword("Please enter password for user key store file \"" + userKeyStore + "\" : "); 
         		}
     	    }
-
+    	    
+    	    if (bearerToken != null) Helper.mylog(LOG_DETAILS, ":bearerToken: " + bearerToken);
     		if (systemScope) Helper.mylog(LOG_DETAILS,":Audited scope: system");    		
     		if (auditedProfile != null) Helper.mylog(LOG_DETAILS,":Audited profile: " + auditedProfile);
     		if (auditedUser != null) Helper.mylog(LOG_DETAILS,":Audited username: " + auditedUser);
@@ -199,7 +202,7 @@ public class Main {
     		        		
 
     		//*********** Start API processing **************/
-	        AWApi awAPI = new AWApi(awName, port, username, password, request, auditedProfile, auditedUser, userKeyStore);
+	        AWApi awAPI = new AWApi(awName, port, username, password, request, auditedProfile, auditedUser, userKeyStore, bearerToken);
 	        
 	    	awAPI.setNumResults(numResults); // set the number of records to read in one API call
 	    	awAPI.setStartTime(startTimeEpoch);   	

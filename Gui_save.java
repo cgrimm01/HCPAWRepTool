@@ -1,3 +1,4 @@
+package com.hitachivantara.hcpaw.gui;
 /**
  * HCP Anywhere Reporting Tool  
  * Copyright (C) 2017-2018 Hitachi Vantara Corporation
@@ -22,6 +23,8 @@
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.GridLayout;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.Dimension;
 
 import javax.swing.*;
@@ -30,12 +33,16 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
+import com.hitachivantara.hcpaw.AppManifest;
+import com.hitachivantara.hcpaw.Helper;
+import com.hitachivantara.hcpaw.InputOptions;
+
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.IOException;
 
 
-public class Gui {
+public class Gui implements ItemListener {
 
 	// Exit codes:
 	final static int EXIT_OK = Helper.EXIT_OK;	
@@ -53,6 +60,7 @@ public class Gui {
 
 	// Configurable values:
 	private static String awName = null; // e.g. "cluster64d-vm4-0.lab.archivas.com"
+	private static Boolean useLoginCert = Boolean.FALSE;
 	private static String username = null; //e.g. "vrevsin"
 	private static String password = null; 
 	private static String auditedProfile = null; // e.g. "fssusers"
@@ -60,12 +68,16 @@ public class Gui {
 	private static String auditedPath = null; // e.g. "/myfolder/myfile
 	private static boolean systemScope = false;
 
+	private static JCheckBox useLoginCertBox = null;
+    private static JTextField usernameField = null;
+    private static JPasswordField passwordField = null;
+    
 	///////////////////////  GUI handling  ////////////////////////////
 
     //
     // Dialog to get a text
 	// 
-    public static String createDialogGetText(String promptText, String defaultText) {
+    public String createDialogGetText(String promptText, String defaultText) {
 		    	
 		final JFrame parent = new JFrame(AppManifest.getAppInfoLong());		
 		String retText = (String)JOptionPane.showInputDialog(
@@ -83,7 +95,7 @@ public class Gui {
     //
     // Dialog to get a password
 	// 
-    public static String createDialogGetPassword(String msg) {
+    public String createDialogGetPassword(String msg) {
 		final JFrame parent = new JFrame(AppManifest.getAppInfoLong());	    	
         JPasswordField jpf = new JPasswordField(24);
         JLabel jl = new JLabel(msg + "  ");
@@ -101,7 +113,7 @@ public class Gui {
     //
     // Dialog with a dropdown menu 
 	//    
-    public static String createDropdownList(String msg, String [] dropdownMsg) {
+    public String createDropdownList(String msg, String [] dropdownMsg) {
    	
     	JComboBox<String> dropdownList = new JComboBox<>(dropdownMsg);
 		//final JFrame parent = new JFrame(MYPROGSTRING);
@@ -123,14 +135,15 @@ public class Gui {
     }
 
     //
-    // Three lines dialog: AW Server, username and password  
+    // Four lines dialog: AW Server, Certificate Selection, username and password  
 	//       
-    public static void createDialogAwServer() {
+    public void createDialogAwServer() {
     
 	    JPanel myPanel = new JPanel(new BorderLayout(5,5));
 	
 	    JPanel labels = new JPanel(new GridLayout(0,1,2,2)); //
 	    labels.add(new JLabel("HCP Anywhere Server", SwingConstants.RIGHT));
+	    labels.add(new JLabel("Use User Login Certificate", SwingConstants.RIGHT));
 	    labels.add(new JLabel("Admin/auditor username", SwingConstants.RIGHT));
 	    labels.add(new JLabel("Password", SwingConstants.RIGHT));
 	    myPanel.add(labels, BorderLayout.WEST);
@@ -139,11 +152,16 @@ public class Gui {
 	    JPanel controls = new JPanel(new GridLayout(0,1,2,2));
 	    JTextField awserverField = new JTextField(InputOptions.getAwName(), 40);
 		controls.add(awserverField);
-	    
-	    JTextField usernameField = new JTextField(InputOptions.getUsername(),15);
+
+		useLoginCertBox = new JCheckBox("");
+		useLoginCertBox.setSelected(false);
+		useLoginCertBox.addItemListener(this);
+		controls.add(useLoginCertBox);
+		
+	    usernameField = new JTextField(InputOptions.getUsername(),15);
 		controls.add(usernameField);
 
-	    JPasswordField passwordField = new JPasswordField(15);
+	    passwordField = new JPasswordField(15);
 	    // passwordField.addAncestorListener(new RequestFocusListener(false));
 	    controls.add(passwordField);
 	    
@@ -154,14 +172,36 @@ public class Gui {
 	        null, myPanel, AppManifest.getAppInfoLong(), JOptionPane.PLAIN_MESSAGE);
 	    
   	   	awName = awserverField.getText();
-  	    username = usernameField.getText();
-  	    password = new String(passwordField.getPassword());
+  	   	useLoginCert = useLoginCertBox.isSelected();
+  	   	// Only set if not using Login Certificate.
+  	   	if ( ! useLoginCert ) {
+  	  	    username = usernameField.getText();
+  	  	    password = new String(passwordField.getPassword());
+  	   	}
     }
 
+    public void itemStateChanged(ItemEvent e) {
+    	
+    	Object source = e.getItemSelectable();
+
+    	if (source == useLoginCertBox) {
+    		JCheckBox me = (JCheckBox)source;
+    		
+    		if (me.isSelected()) {
+    			usernameField.setEnabled(false);
+    			passwordField.setEnabled(false);
+    		} else {
+    			usernameField.setEnabled(true);
+    			passwordField.setEnabled(true);
+    		}
+    		
+    	}
+    }
+    
     //
     // TextArea for the "console" output   
     //
-	public static class JTextAreaOutputStream extends OutputStream
+	public class JTextAreaOutputStream extends OutputStream
 	{
 	    private final JTextArea destination;
 
@@ -197,7 +237,7 @@ public class Gui {
 	//
 	// Start a TextArea for the "console" output
 	// 
-    public static void startGUI () throws Exception
+    public void startGUI () throws Exception
     {
         JTextArea textArea = new JTextArea (30, 100);
 
@@ -228,9 +268,11 @@ public class Gui {
 
     		InputOptions.setCsvTimeStampSuffix(true);  // force timestamp suffix for GUI
     		
-    		createDialogAwServer();  // ask for AW server, username and password information
+    		Gui me = new Gui();
+    		me.createDialogAwServer();  // ask for AW server, username and password information
     		    		     		
-    		if (Helper.isEmpty(awName) || Helper.isEmpty(username) || Helper.isEmpty(password)) {
+    		if (Helper.isEmpty(awName) 
+    		    || ( ! useLoginCert && (Helper.isEmpty(username) || Helper.isEmpty(password)))) {
     			String infoMessage = "ERROR: Missing HCP Anywhere server and/or credential information. Exiting.";
     			JOptionPane.showMessageDialog(null, infoMessage, 
     					AppManifest.getAppInfoLong(), 
@@ -244,7 +286,7 @@ public class Gui {
     		while (!scopeDefined) {
     			// String scope = Gui.createDialogGetText("Enter the scope [user | profile | system]", "system");
     			String[] scopeList = new String[] {"profile", "user", "system"};
-    			String scope = createDropdownList("Select the scope", scopeList);
+    			String scope = me.createDropdownList("Select the scope", scopeList);
     			if (Helper.isEmpty(scope)) {
     				String infoMessage = "ERROR: Cannot proceed without a scope. Exiting.";
         			JOptionPane.showMessageDialog(null, infoMessage, 
@@ -260,7 +302,7 @@ public class Gui {
     				systemScope = true;
     				scopeDefined = true;    			
     			} else if (scope.equalsIgnoreCase("profile")) {
-    				auditedProfile = createDialogGetText("Enter audited profile name", "");
+    				auditedProfile = me.createDialogGetText("Enter audited profile name", "");
     				if (auditedProfile == null) {
     					String infoMessage = "ERROR: Cannot proceed without a profile name. Exiting.";
     					JOptionPane.showMessageDialog(null, infoMessage, 
@@ -274,7 +316,7 @@ public class Gui {
     					scopeDefined = true;
     				}
     			} else if (scope.equalsIgnoreCase("user")) {
-    				auditedUser = createDialogGetText("Enter audited user", "");
+    				auditedUser = me.createDialogGetText("Enter audited user", "");
     				if (auditedUser == null) {
     					String infoMessage = "ERROR: Cannot proceed without a user name. Exiting.";
     					JOptionPane.showMessageDialog(null, infoMessage, 
@@ -300,6 +342,7 @@ public class Gui {
     		
     		InputOptions.setIsSingleRequest(false);  // GUI only supports bulk reporting
     		InputOptions.setAwName(awName);
+			InputOptions.setUserKeyStore((useLoginCert ? "Windows-MY" : null));
 			InputOptions.setUsername(username);
 			InputOptions.setPassword(password);
     		InputOptions.setAuditedProfile(auditedProfile);
@@ -307,7 +350,7 @@ public class Gui {
 			InputOptions.setAuditedPath(auditedPath);
     		InputOptions.setSystemScope(systemScope);
 
-    		startGUI(); // show log messages in the GUI
+    		me.startGUI(); // show log messages in the GUI
 	}
 
 
