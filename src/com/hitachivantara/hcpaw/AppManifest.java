@@ -21,9 +21,11 @@ package com.hitachivantara.hcpaw;
  */
 
 import java.util.jar.Attributes;
-import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 public class AppManifest {
 
@@ -31,66 +33,80 @@ public class AppManifest {
 	static private String appVendorName = "Hitachi Vantara Corporation";// overwritten by manifest.mf
 	static private String appCopyrightYears = "2017-2020";				// overwritten by manifest.mf
 	static private String appTitle = "HCP Anywhere Reporting Tool";		// overwritten by manifest.mf
-	static private String appVersionNumber = "0.10";					// overwritten by manifest.mf
+	static private String appVersionNumber = "0.12";					// overwritten by manifest.mf
 	static private String appName = "HCPAWRepTool";
 
 
-	static private String appInfoS = "";  // short description 
-	static private String appInfoM = "";  // medium description 
-	static private String appInfoL = "";  // long description 
+	private String appInfoS = "";  // short description 
+	private String appInfoM = "";  // medium description 
+	private String appInfoL = "";  // long description 
 
+	static private AppManifest me;
+	static public AppManifest getInstance() {
+		if (null == me) {
+			me = new AppManifest();
+			
+			me.initAppManifest();
+		}
+		
+		return me;
+	}
+	
 	// Initialize app properties from Manifest.mf file:
 	//	appVendorName, appVersionNumber, appTitle, appCopyrightYears, appJarName
-	public static void initAppManifest() {
+	private void initAppManifest() {
 		try { 
 
-			// Get the name of executable jar file (e.g. hcpawreptool.jar): 
-			String jarname = new java.io.File(Main.class.getProtectionDomain()
-											.getCodeSource()
-											.getLocation()
-											.getPath())
-											.getName();
-			// get Manifest file from a jar file:
-			JarFile jar = new JarFile(jarname); 
-			Manifest manifest = jar.getManifest(); 
-			Attributes attributes = manifest.getMainAttributes();
-
-			// Find our attributes from Manifest.mf: 
-			appVendorName = attributes.getValue("Implementation-Vendor");
-			appVersionNumber = attributes.getValue("Implementation-Version");
-			appTitle  = attributes.getValue("Implementation-Title");
-			appCopyrightYears = attributes.getValue("Implementation-Copyright");
-			appName = attributes.getValue("Name");
-
-			appJarName = jarname;
+			URLClassLoader cl = (URLClassLoader) getClass().getClassLoader();
 			
-			jar.close();
+		    URL url = cl.findResource("META-APP-DATA/MANIFEST.MF");
+			Manifest manifest = new Manifest(url.openStream());
+			Attributes attributes = manifest.getMainAttributes();
+			
+			// Find our attributes from Manifest.mf: 
+			String val;
+			val = attributes.getValue("Implementation-Vendor");
+			if (!Helper.isEmpty(val)) appVendorName = val;
+			val = attributes.getValue("Implementation-Version");
+			if (!Helper.isEmpty(val)) appVersionNumber = val;
+			val = attributes.getValue("Implementation-Title");
+			if (!Helper.isEmpty(val)) appTitle = val;
+			val = attributes.getValue("Implementation-Copyright");
+			if (!Helper.isEmpty(val)) appCopyrightYears = val;
+			val = attributes.getValue("Name");
+			if (!Helper.isEmpty(val)) appName = val;
+
+			// Only set the jarFile at run-time if it is actually in a jar file.
+			File jarFile = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().getFile());
+			if (jarFile.isFile()) {
+				appJarName = jarFile.getName();
+			}
 		}
 		catch (IOException ioe) {
-			Helper.mylog(Helper.LOG_BASE, "WARNING - Couldn't read tool properties from MANIFEST.MF file");
+			Helper.mylog(Helper.LOG_BASE, "WARNING - Couldn't read tool properties from META-APP-DATA/MANIFEST.MF file");
 		} finally {
 			setAppInfoStrings();
 		}
 	}
 
-	static void setAppInfoStrings() {
+	private void setAppInfoStrings() {
 		// Set the app info strings: jarname, version, copyright, vendor, title
 		appInfoS = appName + " v" + appVersionNumber;
 		appInfoM = appInfoS + " - " + appTitle;
 		appInfoL  = appInfoM + " - (c) " + appCopyrightYears + " " + appVendorName;
 	}
 
-	public static String getAppJarName() {
+	public String getAppJarName() {
 		return appJarName;
 	}
 
-	public static String getAppInfoShort() {
+	public String getAppInfoShort() {
 		return appInfoS;
 	}
-	public static String getAppInfoMedium() {
+	public String getAppInfoMedium() {
 		return appInfoM;
 	}
-	public static String getAppInfoLong() {
+	public String getAppInfoLong() {
 		return appInfoL;
 	}
 

@@ -249,7 +249,7 @@ public class MapiHandler {
 		}
 
 		if (mapiDescr.isIncludeVersionsSupported()) {
-			awAPI.setIncludeVersions(true);
+			awAPI.setIncludeVersions( ! InputOptions.getExcludeVersions() );
 		}
 
 		if (mapiDescr.isInactivityTimeSecondsSupported()) {

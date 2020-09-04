@@ -77,6 +77,7 @@ public class InputOptions {
 	final static private String CMD_LINE_TOTAL_RECORD_NUMBERS = "total-records";
 	final static private String CMD_LINE_DESCRIPTION_PLACE = "description";
 	final static private String CMD_LINE_BEARER_TOKEN = "bearer-token";
+	final static private String CMD_LINE_EXCLUDE_VERSIONS = "exclude-versions";
 	final static private String CMD_LINE_DEBUG = "debug";	
 
     // Default values:
@@ -124,6 +125,7 @@ public class InputOptions {
 	private static int totalRecordsMax = DEFAULT_TOTAL_RECORDS; // number of total requested records
 	private static int descriptionPlace = DEFAULT_DESCRIPTION_PLACE; // where to place the report description in CSV file 
 	private static String bearerToken = null;
+	private static Boolean excludeVersions = Boolean.FALSE;
 	
 	private static String jfilename = null;
 	private static boolean usejsonfile = false;	
@@ -313,6 +315,10 @@ public class InputOptions {
 	
 	public static String getBearerToken() {
 		return bearerToken;
+	}
+	
+	public static Boolean getExcludeVersions() {
+		return excludeVersions;
 	}
 	
 	//////////////////////////////////////////////////////////////////////////
@@ -519,7 +525,13 @@ public class InputOptions {
        	     	.argName( "number" )               
                 .desc("Enable/disable a short description of the Report in CSV file: 0 - disable; 1 [default] - enable, place it on the first line of CSV (above the header); 2 - enable, place it in the header of CSV, on the last column")
                 .build();
-     	
+
+     	Option excludeVersionOption = Option.builder("xv")
+                .longOpt( CMD_LINE_EXCLUDE_VERSIONS )
+                .required(false)
+                .desc("Exclude older versions of files")
+                .build();
+
      	Option debugOption = Option.builder("d")
                 .longOpt( CMD_LINE_DEBUG )
                 .required(false)
@@ -532,7 +544,7 @@ public class InputOptions {
      	    				profileOption, auditeduserOption, auditedPathOption, systemScopeOption,    	    	
      	    				csvfileOption, jsonfileOption, startTimeOption, endTimeOption, timeZoneOption,
      	    				csvTimeSuffixOption, allReportsOption, guiOption, portOption, numRecordsOption,
-     	    				numTotalRecordsOption, descriptionPlacementOption, logLevelOption     			
+     	    				numTotalRecordsOption, descriptionPlacementOption, logLevelOption, excludeVersionOption
      						};
      	// Hidden options:
      	Option hiddenOptions[] = { debugOption	
@@ -573,7 +585,7 @@ public class InputOptions {
     		// If help/usage was requested - just show it and exit
     		HelpFormatter formatter = new HelpFormatter();
     		formatter.setWidth(130);
-    		String javacmd =  "java -jar " + AppManifest.getAppJarName();
+    		String javacmd =  "java -jar " + AppManifest.getInstance().getAppJarName();
     		String header = javacmd + " [options]";
     		String footer = "\nFew examples:  " + javacmd + " ...\n\n" + 
     				"Profile scope:\n" +
@@ -645,7 +657,11 @@ public class InputOptions {
 					
     		bearerToken = cmdLine.hasOption(CMD_LINE_BEARER_TOKEN) ?
     				(String) (cmdLine.getParsedOptionValue( CMD_LINE_BEARER_TOKEN )) : null; 
-    	    		
+    	    
+    		if (cmdLine.hasOption(CMD_LINE_EXCLUDE_VERSIONS)) {
+    			excludeVersions = Boolean.TRUE;
+    		}
+
             // Issue warning if both username and user key store was specified.
     		if (null != username && null != userKeyStore) {
 	    		Helper.mylog(LOG_WARNING,"WARNING: Ignoring " + CMD_LINE_USERNAME + " input paramater since " + CMD_LINE_USERKEYSTORE + " was also specified.");

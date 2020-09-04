@@ -73,11 +73,8 @@ public class Main {
 
    public static void main(String[] args) throws Exception {   	
 
-		// Initialize app info (name, version, copyright, etc) - from Manifest.mf file
-		AppManifest.initAppManifest();
-
 		// Display the program-string
-    	Helper.mylog(LOG_BASE, AppManifest.getAppInfoLong());
+    	Helper.mylog(LOG_BASE, AppManifest.getInstance().getAppInfoLong());
     	
     	// process the command line arguments
     	InputOptions.cmdLineParsing(args);
@@ -330,7 +327,7 @@ public class Main {
 		String auditlog = null;     
 
 		// Set the Report description 1st line in the report
-		writer.addToDescriptionLine("This report created by " + AppManifest.getAppInfoShort());
+		writer.addToDescriptionLine("This report created by " + AppManifest.getInstance().getAppInfoShort());
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 		Date date = new Date();
 		writer.addToDescriptionLine(dateFormat.format(date)); 					 

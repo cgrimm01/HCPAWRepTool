@@ -72,7 +72,7 @@ public class Gui {
 	// 
     public String createDialogGetText(String promptText, String defaultText) {
 		    	
-		final JFrame parent = new JFrame(AppManifest.getAppInfoLong());		
+		final JFrame parent = new JFrame(AppManifest.getInstance().getAppInfoLong());		
 		String retText = (String)JOptionPane.showInputDialog(
 							parent,
 		                    promptText, defaultText);
@@ -89,13 +89,13 @@ public class Gui {
     // Dialog to get a password
 	// 
     public String createDialogGetPassword(String msg) {
-		final JFrame parent = new JFrame(AppManifest.getAppInfoLong());	    	
+		final JFrame parent = new JFrame(AppManifest.getInstance().getAppInfoLong());	    	
         JPasswordField jpf = new JPasswordField(24);
         JLabel jl = new JLabel(msg + "  ");
         Box box = Box.createVerticalBox();
         box.add(jl);
         box.add(jpf);
-        int x = JOptionPane.showConfirmDialog(parent, box, AppManifest.getAppInfoLong(), JOptionPane.OK_CANCEL_OPTION);
+        int x = JOptionPane.showConfirmDialog(parent, box, AppManifest.getInstance().getAppInfoLong(), JOptionPane.OK_CANCEL_OPTION);
 
         if (x == JOptionPane.OK_OPTION) {       	
           return new String(jpf.getPassword());
@@ -118,7 +118,7 @@ public class Gui {
         box.add(dropdownList);
         box.setVisible(true);
 
-        int x = JOptionPane.showConfirmDialog(null, box, AppManifest.getAppInfoLong(), JOptionPane.OK_CANCEL_OPTION);      
+        int x = JOptionPane.showConfirmDialog(null, box, AppManifest.getInstance().getAppInfoLong(), JOptionPane.OK_CANCEL_OPTION);      
 
         if (x == JOptionPane.OK_OPTION) {
             return (String) dropdownList.getSelectedItem();
@@ -156,7 +156,7 @@ public class Gui {
     
 		myPanel.setPreferredSize(new Dimension(550, 80));
 	    JOptionPane.showMessageDialog(
-	        null, myPanel, AppManifest.getAppInfoLong(), JOptionPane.PLAIN_MESSAGE);
+	        null, myPanel, AppManifest.getInstance().getAppInfoLong(), JOptionPane.PLAIN_MESSAGE);
 	    
   	   	awName = awserverField.getText();
   	    username = usernameField.getText();
@@ -208,7 +208,7 @@ public class Gui {
 
         textArea.setEditable (false);
 
-        JFrame frame = new JFrame (AppManifest.getAppInfoLong());
+        JFrame frame = new JFrame (AppManifest.getInstance().getAppInfoLong());
         frame.setDefaultCloseOperation (JFrame.EXIT_ON_CLOSE);
         Container contentPane = frame.getContentPane ();
         contentPane.setLayout (new BorderLayout ());
@@ -239,7 +239,7 @@ public class Gui {
     		if (Helper.isEmpty(awName) || Helper.isEmpty(username) || Helper.isEmpty(password)) {
     			String infoMessage = "ERROR: Missing HCP Anywhere server and/or credential information. Exiting.";
     			JOptionPane.showMessageDialog(null, infoMessage, 
-    					AppManifest.getAppInfoLong(), 
+    					AppManifest.getInstance().getAppInfoLong(), 
     					JOptionPane.INFORMATION_MESSAGE);    			
     			myExit(EXIT_USAGE_ERROR);
     		}    		
@@ -253,7 +253,7 @@ public class Gui {
     			if (Helper.isEmpty(scope)) {
     				String infoMessage = "ERROR: Cannot proceed without a scope. Exiting.";
         			JOptionPane.showMessageDialog(null, infoMessage, 
-        					AppManifest.getAppInfoLong(), 
+        					AppManifest.getInstance().getAppInfoLong(), 
         					JOptionPane.INFORMATION_MESSAGE);  				
         			myExit(EXIT_USAGE_ERROR);
     			}
@@ -268,7 +268,7 @@ public class Gui {
     				if (auditedProfile == null) {
     					String infoMessage = "ERROR: Cannot proceed without a profile name. Exiting.";
     					JOptionPane.showMessageDialog(null, infoMessage, 
-    							AppManifest.getAppInfoLong(), 
+    							AppManifest.getInstance().getAppInfoLong(), 
     							JOptionPane.INFORMATION_MESSAGE);
             			myExit(EXIT_USAGE_ERROR);
     				} else {
@@ -281,7 +281,7 @@ public class Gui {
     				if (auditedUser == null) {
     					String infoMessage = "ERROR: Cannot proceed without a user name. Exiting.";
     					JOptionPane.showMessageDialog(null, infoMessage, 
-    							AppManifest.getAppInfoLong(), 
+    							AppManifest.getInstance().getAppInfoLong(), 
     							JOptionPane.INFORMATION_MESSAGE);  				    					
             			myExit(EXIT_USAGE_ERROR);
 					} else {
@@ -293,7 +293,7 @@ public class Gui {
     				// Should NEVER be here 
     				String infoMessage = "ERROR: Cannot proceed with a scope. Exiting...";
         			JOptionPane.showMessageDialog(null, infoMessage, 
-        					AppManifest.getAppInfoLong(), 
+        					AppManifest.getInstance().getAppInfoLong(), 
         					JOptionPane.INFORMATION_MESSAGE);
         			myExit(EXIT_USAGE_ERROR);
     			}   			
