@@ -7,4 +7,5 @@ build/META-INF/MANIFEST*
 build/META-INF/LICENSE*
 build/META-INF/DEPENDENCIES*
 bin/com/
+bin/META-APP-DATA/
 .DS_Store
